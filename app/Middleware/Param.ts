@@ -6,21 +6,26 @@ export default class Param {
     let req = request.all()
     let orderBy = 'id'
     let orderType: 'asc' | 'desc' = 'asc'
-    let search = req.search
+    let search = ''
+    if(req.search){
+      search = req.search
+    }
     if (req.sort) {
-      let sort = JSON.parse(req.sort)
+      let sort = JSON.parse(JSON.stringify(req.sort))
+      //let sort = req.sort().toString()
       orderBy = sort[0]
       orderType = sort[1]
     }
 
     let filter:any = {}
     if (req.filter) {
-      filter = JSON.parse(req.filter)
+      filter = JSON.parse(JSON.stringify(req.filter))
+      //filter = req.filter().toString()
     }
     
     
     
-    filter.deletedAt = null ///because soft delete @before fetch/paginate query dosen't work correctly -> wrong meta
+   // filter.deletedAt = null ///because soft delete @before fetch/paginate query dosen't work correctly -> wrong meta
     request.all().filter = filter
     request.all().orderBy = orderBy
     request.all().orderType = orderType

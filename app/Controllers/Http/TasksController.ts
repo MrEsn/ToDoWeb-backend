@@ -4,12 +4,32 @@ import Task from 'App/Models/Task'
 export default class TasksController {
 
     async index({request, response}: HttpContextContract){
+        let tasks = {}
         try {
             const req = request.all()
-            const tasks = await Task.query()
-            .where(req.filter)
-            .orderBy(req.orderBy, req.orderType)
-            .where('title', 'LIKE', req.search)
+            if(req.search){
+                tasks = await Task.query()
+                    .where(req.filter)
+                    .orderBy(req.orderBy, req.orderType)
+                    .where('title', 'LIKE', req.search)}
+              else{
+                tasks = await Task.query()
+                    .where(req.filter)
+                    .orderBy(req.orderBy, req.orderType)
+              }
+            /*if(req.search){
+                 tasks = await Task.query()
+                 .where('title', 'LIKE', req.search)
+                 .orderBy(req.orderBy, req.orderType)
+            }
+            else if(req.filter){
+                tasks = await Task.query()
+                .where(req.filter)
+                .orderBy(req.orderBy, req.orderType)
+            }
+            else{
+                console.log('noooo')
+            }*/
         return tasks
         } catch (error) {
             console.log(error);
