@@ -2,40 +2,16 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Task from 'App/Models/Task'
 
 export default class TasksController {
-  /*  async index({ request, response }: HttpContextContract) {
+    async index({request, response, auth}: HttpContextContract){
+        const auth_user = auth.user
+        let req = request.all()
+        req.filter.user_id = auth_user?.id
         try {
-            const { filter, sort, search } = request.all();
-    
-            let tasksQuery = Task.query();
-            if (filter && Array.isArray(filter)) {
-                filter.forEach(([field, value]) => {
-                    tasksQuery = tasksQuery.where(field, value);
-                });
-            }
-            if (sort && Array.isArray(sort)) {
-                tasksQuery = tasksQuery.orderBy(sort[0], sort[1]);
-            }
-            if (search && search !== '') {
-                tasksQuery = tasksQuery.where('title', 'LIKE', `%${search}%`);
-            }
-            console.log(tasksQuery)
-            const tasks = await tasksQuery.exec();
-            return tasks;
-        } catch (error) {
-            console.error(error);
-            return response.status(500).json({ status: 'error', message: 'KOOFT'});
-        }
-    }*/
-    
-    async index({request, response}: HttpContextContract){
-        const req = request.all()
-        try {
-
-            console.log(req.search)
             const tasks = await Task.query()
-            .where(req.filter[0],"LIKE","%"+req.filter[1]+"%")
-            .orderBy(req.orderBy, req.orderType)
+            .where(req.filter)
             .where('title', 'like', "%"+req.search+"%")
+            .orderBy(req.orderBy, req.orderType)
+            .paginate(req.page , req.perPage)
         return tasks
         } catch (error) {
             console.log(error);
@@ -43,16 +19,16 @@ export default class TasksController {
         }
     }
 
-    async show({params}: HttpContextContract ) {
-        const task = Task.find(params.id)
+    async show({params,}: HttpContextContract ) {
+        const task = Task.find(params)
         return task
     }
 
 
-    async store({request , response}: HttpContextContract) {
-        const data = request.only(['title' , 'description' , 'priority' , 'due_date'])
+    async store({request, response}: HttpContextContract) {
+        const data = request.only(['title' , 'description' , 'priority' , 'due_date', 'text_color', 'background_color'])
         try {
-            const task = await Task.create(data)
+            await Task.create(data)
             return response.status(201).json({status:'ok', massage: "Done"})
         } catch (error) {
             console.log(error);
@@ -77,28 +53,4 @@ export default class TasksController {
         return c
     }
 
-
 }
-/*if(req.search){
-                tasks = await Task.query()
-                    .where(req.filter)
-                    .orderBy(req.orderBy, req.orderType)
-                    .where('title', 'LIKE', req.search)}
-              else{
-                tasks = await Task.query()
-                    .where(req.filter)
-                    .orderBy(req.orderBy, req.orderType)
-              }
-            if(req.search){
-                 tasks = await Task.query()
-                 .where('title', 'LIKE', req.search)
-                 .orderBy(req.orderBy, req.orderType)
-            }
-            else if(req.filter){
-                tasks = await Task.query()
-                .where(req.filter)
-                .orderBy(req.orderBy, req.orderType)
-            }
-            else{
-                console.log('noooo')
-            }*/ 

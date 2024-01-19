@@ -1,60 +1,72 @@
 import  { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import Task from 'App/Models/Task'
+import User from 'App/Models/User'
+import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 export default class UsersController {
-
-
-    async panel({ request, response}: HttpContextContract ) {
-        let a = request.all()
-        console.log(request.body())
-        return response.status(301)
-    }
-
-
-    
-
-    // async index({request}: HttpContextContract ) {
-    //      let a = request.all()
-    //      let b = request.input('name')
-    //     console.log(request.body())
-    //     return [{id:1, name: 'ali', age: 20},{id:2,name: 'ali', age: 10},{id:3,name: 'reza', age: 15}]
-    // }
-
-    async show({ params}: HttpContextContract ) {
-        const task = Task.find(params.id)
-        return task
-    }
-
-    async store({request , response}: HttpContextContract) {
-        const data = request.only(['title' , 'description' , 'prioriy' , 'due_date'])
+    async register({request, response, auth}: HttpContextContract) {
+        const userSchema = schema.create({
+            user_name: schema.string({trim : true}, [
+                rules.maxLength(70),
+                rules.minLength(5)
+            ]),
+            email: schema.string({trim : true},[
+                rules.email(),
+                rules.unique({table: 'users', column: 'email'})
+            ]),
+            password: schema.string({trim: true},[
+                rules.maxLength(20),
+                rules.confirmed('password_confirmation')
+            ])
+        })
+        const data = await request.validate({schema: userSchema})
         try {
-            const task = await Task.create(data)
-            return response.status(201).json({status:'ok', massage: "Done"})
+            const user = await User.create(data)
+            const token = await auth.use('api').generate(user)
+            return response.status(201).json({ status:'ok', massage: "Done", token})
         } catch (error) {
             console.log(error);
-            return response.status(500).json({status:'error' , message: "KOOFT"})
+            return response.status(500).json({status:'error' , message: "error"})
         }
     }
 
-    async index({}: HttpContextContract){
-        let c = Task.all()
-        return c
-    }
 
-    async destroy({params}: HttpContextContract){
-        let id = params.id
-        const task = await Task.findOrFail(id)
-        await task.delete()
-        let c = await Task.all()
-        return c
-    }
+     public async login({request, response, auth}: HttpContextContract){
+        const {uid, password} = request.only(['uid', 'password'])
+        try {
+            const token = await auth.use('api').attempt(uid, password)
+            return response.status(201).json({status:'ok' , message: token})
+        } catch(error){
+            console.log(error)
+            return response.status(500).json({status:'error' , message: "error"})
+        }
+     }
 
 
-    async update({params,request}:HttpContextContract){
-        const task = await Task.findOrFail(params.id)
+     public async logout({response, auth}: HttpContextContract){
+        await auth.logout()
+         return response.status(201).json({status: 'ok', massage: 'Done'})
+     }
      
-        const data = request.only(['title', 'description', 'priority', 'due_date' ])
-        await task.merge(data).save()
-        return task
-    }
+   
+     public async github({ally}: HttpContextContract){
+        return ally.use('github').redirect()
+     }
+
+
+     public async github_callback({auth, ally, response}: HttpContextContract){
+        const github = ally.use('github')
+        const githubUser = await github.user()
+        const user =  await User.create({
+            user_name: githubUser.name,
+            email: githubUser.email!,
+         })
+         const token = githubUser.token
+         await auth.login(user)
+         return response.status(201).json({status: 'ok', massage: token})
+     }
+
+
+     public async google({ ally}: HttpContextContract){
+        return ally.use('google').redirect()
+     }
 }

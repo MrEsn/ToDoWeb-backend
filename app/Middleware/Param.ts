@@ -4,34 +4,22 @@ export default class Param {
   public async handle({request}: HttpContextContract, next: () => Promise<void>) {
     // code for middleware goes here. ABOVE THE NEXT CALL
     let req = request.all()
-    let orderBy = 'id'
-    let orderType: 'asc' | 'desc' = 'asc'
-    let search = ''
-    if(req.search){
-      search = req.search
-    }
-    if (req.sort) {
-      let sort = JSON.parse(req.sort)
-      //let sort = req.sort().toString()
-      orderBy = sort[0]
-      orderType = sort[1]
-    }
 
-   // let filter = JSON.parse(JSON.stringify(req.filter))
+    let orderType: 'asc' | 'desc' = request.input('orderType', 'asc')
+    
+    
     let filter:any = {}
     if (req.filter) {
       filter = JSON.parse(req.filter)
-      //filter = req.filter().toString()
-      //filter = JSON.parse(req.filter)
     }
-    
-    
-    
-    //filter.deletedAt = null ///because soft delete @before fetch/paginate query dosen't work correctly -> wrong meta
     request.all().filter = filter
-    request.all().orderBy = orderBy
+    request.all().orderBy = request.input('orderBy', 'id')
     request.all().orderType = orderType
-    request.all().search = search
+    request.all().page = request.input('page', '1')
+    request.all().per_page = request.input('perPage', '10')
+    if(req.search){
+      request.all().search = req.search
+    }
     await next()
   }
 }

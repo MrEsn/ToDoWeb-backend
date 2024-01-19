@@ -1,5 +1,8 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import User
+ from './User'
+import { BaseModel, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
+import Category from './Category'
 
 export default class Task extends BaseModel {
   @column({ isPrimary: true })
@@ -14,6 +17,18 @@ export default class Task extends BaseModel {
   @column()
   public priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest'
 
+  @column()
+  public userId: number
+
+  @column()
+  public categoryId: number
+
+  @belongsTo(() => Category)
+  public category: BelongsTo<typeof Category>
+
+  @belongsTo(() => User)
+  public user: BelongsTo<typeof User>
+
   @column.dateTime()
   public dueDate: DateTime
   
@@ -22,4 +37,5 @@ export default class Task extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
 }
